@@ -37,16 +37,18 @@ class SeyondComponent
   void ReadScanCallback(
       const std::shared_ptr<seyond::SeyondScan>& scan_message) override;
 
-  void PointCloudCallback();
+  void SeyondCloudCallback(std::shared_ptr<PointCloud> cloud);
 
   void SeyondPacketCallback(const InnoDataPacket *pkt, bool is_next_frame);
 
+  std::shared_ptr<PointCloud> SeyondCloudAllocateCallback();
 
  private:
   std::shared_ptr<SeyondDriver> driver_ptr_;
   apollo::drivers::seyond::Config conf_;
 
   std::shared_ptr<seyond::SeyondScan> scan_packets_ptr_{nullptr};
+  std::shared_ptr<SyncBuffering<PointCloud>> cloud_buffer_;
 
   uint32_t table_send_hz_{10};
   uint32_t frame_count_{0};

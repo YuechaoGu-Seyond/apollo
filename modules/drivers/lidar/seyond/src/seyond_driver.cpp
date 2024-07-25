@@ -273,7 +273,9 @@ int32_t SeyondDriver::data_callback_(const InnoDataPacket *pkt) {
     point_cloud_ptr_->set_height(1);
     point_cloud_ptr_->set_width(frame_points_width_);
     // data publish
-    point_publish_cb_();
+    cloud_publish_cb_(point_cloud_ptr_);
+    point_cloud_ptr_ = allocate_cloud_cb_();
+    point_cloud_ptr_->mutable_point()->Clear();
     current_frame_id_ = pkt->idx;
     frame_points_width_ = 0;
   }
@@ -313,7 +315,9 @@ int32_t SeyondDriver::process_scan_packet_(
   point_cloud_ptr_->set_height(1);
   point_cloud_ptr_->set_width(frame_points_width_);
   frame_points_width_ = 0;
-  point_publish_cb_();
+  cloud_publish_cb_(point_cloud_ptr_);
+  point_cloud_ptr_ = allocate_cloud_cb_();
+  point_cloud_ptr_->mutable_point()->Clear();
 
   return 0;
 }

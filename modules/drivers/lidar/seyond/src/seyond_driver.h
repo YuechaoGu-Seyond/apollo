@@ -104,8 +104,12 @@ class SeyondDriver {
           &callback) {
     packet_publish_cb_ = callback;
   }
-  void register_publish_point_callback(const std::function<void()> &callback) {
-    point_publish_cb_ = callback;
+  void register_publish_point_callback(
+      const std::function<void(std::shared_ptr<PointCloud>)> &cloud_callback,
+      const std::function<std::shared_ptr<PointCloud>()> &allocate_callback) {
+    cloud_publish_cb_ = cloud_callback;
+    allocate_cloud_cb_ = allocate_callback;
+    point_cloud_ptr_ = allocate_cloud_cb_();
   }
   bool setup_lidar();
   bool init(SeyondParam& param);
@@ -136,7 +140,8 @@ class SeyondDriver {
   std::shared_ptr<PointCloud> point_cloud_ptr_{nullptr};
 
   std::function<void(const InnoDataPacket *, bool)> packet_publish_cb_;
-  std::function<void()> point_publish_cb_;
+  std::function<void(std::shared_ptr<PointCloud>)> cloud_publish_cb_;
+  std::function<std::shared_ptr<PointCloud>()> allocate_cloud_cb_;
 
   // config
   SeyondParam param_;

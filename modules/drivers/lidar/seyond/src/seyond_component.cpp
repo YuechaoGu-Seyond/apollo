@@ -25,8 +25,12 @@ bool SeyondComponent::Init() {
     return false;
   }
 
-  driver_ptr_ = std::make_shared<SeyondDriver>();
   this->InitBase(conf_.config_base());
+
+  cloud_buffer_ = std::make_shared<SyncBuffering<PointCloud>>();
+  cloud_buffer_->Init();
+
+  driver_ptr_ = std::make_shared<SeyondDriver>();
 
   SeyondParam driver_param;
   driver_param.device_ip = conf_.device_ip();
@@ -49,12 +53,13 @@ bool SeyondComponent::Init() {
                   std::placeholders::_1, std::placeholders::_2));
 
   driver_ptr_->register_publish_point_callback(
-        std::bind(&SeyondComponent::PointCloudCallback, this));
+      std::bind(&SeyondComponent::SeyondCloudCallback, this,
+                std::placeholders::_1),
+      std::bind(&SeyondComponent::SeyondCloudAllocateCallback, this));
 
   driver_param.print();
 
   scan_packets_ptr_ = std::make_shared<seyond::SeyondScan>();
-  driver_ptr_->point_cloud_ptr_ = AllocatePointCloud();
 
   if (!driver_ptr_->init(driver_param)) {
     AERROR << "seyond Driver init failed";
@@ -74,9 +79,12 @@ void SeyondComponent::ReadScanCallback(
   driver_ptr_->process_scan_packet_(scan_message);
 }
 
-void SeyondComponent::PointCloudCallback() {
-  WritePointCloud(driver_ptr_->point_cloud_ptr_);
-  driver_ptr_->point_cloud_ptr_ = AllocatePointCloud();
+void SeyondComponent::SeyondCloudCallback(std::shared_ptr<PointCloud> cloud) {
+  WritePointCloud(cloud);
+}
+
+std::shared_ptr<PointCloud> SeyondComponent::SeyondCloudAllocateCallback() {
+  return cloud_buffer_->AllocateElement();
 }
 
 void SeyondComponent::SeyondPacketCallback(const InnoDataPacket *pkt,
